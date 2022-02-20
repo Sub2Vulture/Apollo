@@ -1,5 +1,5 @@
 const { Client, Intents, Collection } = require("discord.js");
-const { prefix, owners } = require("./config.json");
+const { guildId } = require("./config.json");
 require("dotenv").config();
 
 const client = new Client({
@@ -9,22 +9,22 @@ const client = new Client({
 
 let bot = {
   client,
-  prefix: prefix,
-  owners: owners,
 };
 
-client.commands = new Collection();
-client.events = new Collection();
 client.slashcommands = new Collection();
 
-client.loadEvents = (bot, reload) => require("./handlers/events")(bot, reload);
-client.loadCommands = (bot, reload) => require("./handlers/commands")(bot, reload);
 client.loadSlashCommands = (bot, reload) => require("./handlers/slashcommands")(bot, reload);
-
-client.loadEvents(bot, false);
-client.loadCommands(bot, false);
 client.loadSlashCommands(bot, false);
 
-module.exports = bot;
+client.on("ready", async () => {
+  console.log(`Loading ${client.slashcommands.size} slash commands`);
+
+  const guild = client.guilds.cache.get(guildId);
+  if (!guild) console.error("Target Guild not found");
+
+  await guild.commands.set([...client.slashcommands.values()]);
+  console.log("Finished");
+  process.exit(0);
+});
 
 client.login(process.env.TOKEN);
